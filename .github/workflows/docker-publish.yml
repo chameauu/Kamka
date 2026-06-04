@@ -121,7 +121,7 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG_DATA }}
-          input: base64
+          kubeconfig-encoding: base64
 
       - name: Deploy Database and Applications
         run: |
