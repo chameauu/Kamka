@@ -84,7 +84,7 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
           tags: |
-            type=sha,prefix=sha-
+            type=raw,value=${{ github.run_number }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
       - name: Build and push ${{ matrix.service }} image

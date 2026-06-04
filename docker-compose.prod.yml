@@ -11,6 +11,7 @@ services:
           memory: 512M
 
   backend-service:
+    image: ${BACKEND_IMAGE:-fullstack-backend:latest}
     restart: always
     ports: []
     deploy:
@@ -20,6 +21,7 @@ services:
           memory: 256M
 
   frontend-service:
+    image: ${FRONTEND_IMAGE:-fullstack-frontend:latest}
     restart: always
     ports:
       - "80:80"
