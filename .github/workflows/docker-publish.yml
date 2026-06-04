@@ -132,9 +132,16 @@ jobs:
           kubectl apply -f kubernetes/backend.yaml
           kubectl apply -f kubernetes/frontend.yaml
 
+          # Force rollout restart to pull the newly built images from Docker Hub
+          kubectl rollout restart deployment/backend-service
+          kubectl rollout restart deployment/frontend-service
+
       - name: Deploy Monitoring Stack
         run: |
           kubectl apply -f kubernetes/monitoring.yaml
+          # Force rollout restart for monitoring stack to pick up new builds if any
+          kubectl rollout restart deployment/prometheus
+          kubectl rollout restart deployment/grafana
 
       - name: Verify Rollout Status
         run: |
