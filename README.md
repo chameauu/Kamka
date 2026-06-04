@@ -213,6 +213,22 @@ frontend_public_ip = "..."
 grafana_public_ip  = "..."
 ```
 
+## 🔗 GitHub Actions CI/CD Pipeline
+
+The GitHub Actions workflow in `.github/workflows/docker-publish.yml` automatically:
+1. Performs backend linting and unit testing on pull requests targeting `master`.
+2. Builds, tags (using standard versioning and commit SHAs), and pushes the updated Docker images to Docker Hub upon merges to `master`.
+3. Performs a Continuous Deployment (CD) update to the active **Azure Kubernetes Service (AKS)** cluster using `kubectl`.
+
+### Required GitHub Secrets
+To enable the CI/CD pipeline, go to your GitHub repository **Settings > Secrets and variables > Actions** and add the following repository secrets:
+
+| Secret Name | Description |
+| :--- | :--- |
+| `DOCKERHUB_USERNAME` | Your Docker Hub registry username |
+| `DOCKERHUB_TOKEN` | A Docker Hub Access Token with write permissions |
+| `KUBE_CONFIG_DATA` | Your Kubernetes credentials config file in base64 format. Generate it using:<br>`cat ~/.kube/config \| base64 -w 0` |
+
 ---
 
 ## 🧪 Testing & Linting
