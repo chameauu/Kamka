@@ -72,5 +72,48 @@ services:
       frontend-service:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      backend-service:
+        condition: service_healthy
+      nginx-exporter:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:13.0.2
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=${GF_AUTH_ANONYMOUS_ENABLED}
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=${GF_AUTH_ANONYMOUS_ORG_ROLE}
+      - GF_SECURITY_ALLOW_EMBEDDING=${GF_SECURITY_ALLOW_EMBEDDING}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: mysql-exporter
+    environment:
+      DATA_SOURCE_NAME: "${MYSQL_USER}:${MYSQL_PASSWORD}@(mysql-service:3306)/"
+    command:
+      - "--mysqld.address=mysql-service:3306"
+      - "--mysqld.username=${MYSQL_USER}"
+    ports:
+      - "9104:9104"
+    depends_on:
+      mysql-service:
+        condition: service_healthy
+
+
 volumes:
   mysql_data:
