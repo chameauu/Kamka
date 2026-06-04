@@ -145,6 +145,9 @@ wait_healthy() {
 # Rollback to snapshot
 # ---------------------------------------------------------------------------
 rollback() {
+  # Disable the ERR trap to avoid infinite loops on failure during rollback
+  trap - ERR
+
   error "Deploy FAILED — initiating rollback"
 
   if [[ ! -f "$ROLLBACK_SNAPSHOT_FILE" ]]; then
@@ -268,9 +271,11 @@ main() {
   success "══════════════════════════════════════════════════"
   compose ps
   rm -f "$ROLLBACK_SNAPSHOT_FILE"
+  # Clear traps on success
+  trap - ERR INT TERM
 }
 
-# Trap unexpected errors and trigger rollback
-trap 'error "Unexpected error on line $LINENO — triggering rollback"; rollback' ERR
+# Trap unexpected errors/interrupts and trigger rollback
+trap 'error "Unexpected error/interrupt on line $LINENO — triggering rollback"; rollback' ERR INT TERM
 
 main "$@"

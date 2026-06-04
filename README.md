@@ -117,6 +117,7 @@ Deploy the faulty `error` release tag:
 ```
 *Result: The deployment script begins upgrading the backend container. It polls the container health state, detects it remains `unhealthy` (due to the simulated HTTP 500 configuration), aborts the deployment, and immediately rolls back both services to the previous stable release (`1` / `7`) tags.*
 
+
 ---
 
 ## 🧪 Testing & Linting
