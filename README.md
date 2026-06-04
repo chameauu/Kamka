@@ -1,107 +1,137 @@
-# Fullstack Application
+# 👥 Kamka — Containerized Fullstack Application
 
-A Docker-based fullstack application with three core services: MySQL database, Node.js backend API, and Nginx frontend.
+A production-grade, containerized fullstack web application equipped with REST APIs, vanilla HTML/CSS frontend, a comprehensive Prometheus/Grafana observability stack, and a robust health-checked deployment script with automatic rollback capabilities.
 
-## Services
+---
 
-### 1. MySQL Service
-- **Container**: `mysql-service`
-- **Port**: `3306`
-- **Role**: Relational database for storing user data
-- **Features**:
-  - Automatic table creation on startup
-  - Health checks enabled
-  - Persistent volume storage (`mysql_data`)
-  - User authentication with environment variables
+## 🏗️ Architecture & Stack Overview
 
-### 2. Backend Service
-- **Container**: `backend-service`
-- **Port**: `3000`
-- **Role**: Express.js API server
-- **Features**:
-  - REST endpoints for user management (`GET`, `POST`, `DELETE`)
-  - Prometheus metrics tracking
-  - Health check endpoint (`/health`)
-  - CORS enabled
-  - Connects to MySQL database
-  - Metrics exposed at `/metrics`
-
-### 3. Frontend Service
-- **Container**: `frontend-service`
-- **Port**: `8080`
-- **Role**: Nginx web server
-- **Features**:
-  - Static file serving
-  - Health checks enabled
-  - Nginx Prometheus exporter integration
-  - Reverse proxy ready
-
-### 4. Nginx Exporter (Bonus)
-- **Container**: `nginx-exporter`
-- **Port**: `9113`
-- **Role**: Prometheus metrics exporter for Nginx monitoring
-
-## Quick Start
-
-1. **Setup environment variables**:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Build and start services**:
-   ```bash
-   docker compose up --build
-   ```
-
-3. **Access services**:
-   - Frontend: `http://localhost:8080`
-   - Backend API: `http://localhost:3000`
-   - Metrics: `http://localhost:3000/metrics`
-   - Nginx Exporter: `http://localhost:9113`
-   - MySQL: `localhost:3306`
-
-## API Endpoints
-
-### Users
-- `GET /api/users` - Get all users
-- `POST /api/users` - Create new user (body: `{name, email}`)
-- `DELETE /api/users/:id` - Delete user by ID
-
-### Health & Metrics
-- `GET /health` - Backend health check
-- `GET /metrics` - Prometheus metrics
-
-## Environment Variables
-
-See `.env.example` for required configuration:
-- `MYSQL_ROOT_PASSWORD`
-- `MYSQL_DATABASE`
-- `MYSQL_USER`
-- `MYSQL_PASSWORD`
-
-## Service Dependencies
-
-- Frontend depends on Backend (healthcheck)
-- Backend depends on MySQL (healthcheck)
-- Nginx Exporter depends on Frontend (healthcheck)
-
-## Volumes
-
-- `mysql_data` - MySQL persistent storage
-
-## Development
-
-To stop services:
-```bash
-docker compose down
+```
+                        [ Internet ]
+                             │
+                             ▼ (Port 80)
+                     ┌───────────────┐
+                     │     NGINX     │
+                     │  (Frontend)   │
+                     └───────────────┘
+                       /           \
+         (Internal proxy)           (Static HTML/CSS)
+                      /               \
+                     ▼                 ▼
+             ┌───────────────┐   ┌───────────────┐
+             │    Express    │   │  User portal  │
+             │   (Backend)   │   │  (index.html) │
+             └───────────────┘   └───────────────┘
+                     │
+                     ▼
+             ┌───────────────┐
+             │     MySQL     │
+             │  (Database)   │
+             └───────────────┘
 ```
 
-To view logs:
+- **Frontend**: Nginx serving static assets and reverse proxying `/api/*` requests internally.
+- **Backend**: Express.js REST API with database pooling and Prometheus instrumentation.
+- **Database**: MySQL 8.0 with automated schema migrations.
+- **Observability**: Prometheus scraping Nginx, Backend, & MySQL endpoints; Grafana dashboards.
+- **CI/CD**: GitHub Actions matrix workflow with smart path-based conditional cache gating.
+
+---
+
+## 🚀 Quick Start (Development Mode)
+
+Get the application up and running locally in development mode in under 2 minutes:
+
+### 1. Configure Environment
+Clone the repository and copy the env configuration file:
 ```bash
-docker compose logs -f [service-name]
+cd fullstack-app
+cp .env.example .env
 ```
 
-To rebuild a specific service:
+### 2. Boot Up the Cluster
+Spin up all services in development mode:
 ```bash
-docker compose up --build [service-name]
+docker compose up --build
+```
+
+### 3. Access Local Endpoints
+- **Web UI**: [http://localhost:8080](http://localhost:8080)
+- **API Status**: [http://localhost:3000/health](http://localhost:3000/health)
+- **Prometheus Metrics**: [http://localhost:3000/metrics](http://localhost:3000/metrics)
+- **Grafana Dashboards**: [http://localhost:3001](http://localhost:3001)
+
+---
+
+## 🔒 Hardened Production Deployment
+
+To run in a secure, hardened production mode, use the production compose override file:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+### Production Security & Parity Features:
+- **Zero Exposed Dev Ports**: Closes public ports for MySQL (`3306`), Backend (`3000`), Exporters (`9113`, `9104`), and Prometheus (`9090`). Only Nginx (`80`) and Grafana (`3001`) are exposed.
+- **Resource Constraints**: Limits CPU and Memory allocations for core services (e.g., MySQL capped at 512MB RAM, Express at 256MB).
+- **Auto-Recovery**: Containers use `restart: always` to recover from failure or system reboots.
+
+---
+
+## 🔄 Automated Rolling Deployments & Rollbacks
+
+We provide a production-grade Bash deployment script ([deploy.sh](file:///home/chameau/Desktop/Kamka/fullstack-app/scripts/deploy.sh)) that handles rolling updates, native container healthchecks, and automated rollbacks on failure.
+
+### Usage
+```bash
+./scripts/deploy.sh <tag>
+```
+
+### How to Test Deploy and Rollback (Local Sandbox)
+
+To verify the deployment orchestration without pushing to a remote registry, follow these sandbox steps:
+
+#### 1. Build and Tag Healthy Release (`1`)
+```bash
+docker tag fullstack-app-backend-service ichameau/fullstack-backend:1
+docker tag fullstack-app-frontend-service ichameau/fullstack-frontend:1
+```
+
+#### 2. Run Deploy for `1`
+```bash
+./scripts/deploy.sh 1
+```
+*Result: The script will pull the tag locally, trigger sequential rolling replacement of the containers, wait for the Docker healthcheck status to become `healthy`, and complete.*
+
+#### 3. Build the Broken Release (`error`)
+We have pre-configured sandbox folders `backend-error/` and `frontend-error/` containing misconfigured health parameters:
+```bash
+# Build the faulty images
+docker build -t ichameau/fullstack-backend:error ./backend-error
+docker build -t ichameau/fullstack-frontend:error ./frontend-error
+```
+
+#### 4. Test Deploy and Auto-Rollback
+Deploy the faulty `error` release tag:
+```bash
+./scripts/deploy.sh error
+```
+*Result: The deployment script begins upgrading the backend container. It polls the container health state, detects it remains `unhealthy` (due to the simulated HTTP 500 configuration), aborts the deployment, and immediately rolls back both services to the previous stable release (`1` / `7`) tags.*
+
+---
+
+## 🧪 Testing & Linting
+
+### Unit & Integration Tests
+Run the Express REST API Jest test suite:
+```bash
+cd backend
+npm install
+npm test
+```
+
+### Linting
+Check code style rules with ESLint:
+```bash
+cd backend
+npm run lint
 ```
