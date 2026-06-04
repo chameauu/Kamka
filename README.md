@@ -182,6 +182,39 @@ kubectl get service grafana
 
 ---
 
+## 🛠️ Azure Kubernetes Service (AKS) Deployment via Terraform
+
+Alternatively, you can deploy the entire Kubernetes infrastructure using the pre-configured HCL files in the [terraform/](file:///home/chameau/Desktop/Kamka/fullstack-app/terraform) directory.
+
+### 1. Configure Secrets & Credentials
+Modify your custom credentials inside the gitignored [terraform.tfvars](file:///home/chameau/Desktop/Kamka/fullstack-app/terraform/terraform.tfvars) file:
+```hcl
+mysql_root_password    = "your-secure-root-password"
+mysql_database         = "fullstack_db"
+mysql_user             = "appuser"
+mysql_password         = "your-secure-user-password"
+
+grafana_admin_user     = "admin"
+grafana_admin_password = "your-secure-grafana-password"
+```
+
+### 2. Run Terraform Apply
+Navigate to the Terraform folder, initialize the providers, and apply the resource configuration:
+```bash
+cd terraform
+terraform init
+terraform apply
+```
+
+### 3. Access Deployed IP Outputs
+Terraform will automatically outputs the public IP endpoints upon completion:
+```bash
+frontend_public_ip = "..."
+grafana_public_ip  = "..."
+```
+
+---
+
 ## 🧪 Testing & Linting
 
 ### Unit & Integration Tests
