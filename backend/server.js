@@ -211,9 +211,14 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Start server
-initDB().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✓ Backend API running on port ${PORT}`);
+// Export app for testing
+module.exports = { app, initDB };
+
+// Start server only when run directly
+if (require.main === module) {
+  initDB().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✓ Backend API running on port ${PORT}`);
+    });
   });
-});
+}
