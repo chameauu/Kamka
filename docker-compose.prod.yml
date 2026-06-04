@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mysql-service:
+    restart: always
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  backend-service:
+    restart: always
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  frontend-service:
+    restart: always
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  nginx-exporter:
+    restart: always
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 64M
+
+  prometheus:
+    restart: always
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  grafana:
+    restart: always
+    ports:
+      - "3001:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  mysql-exporter:
+    restart: always
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 64M
