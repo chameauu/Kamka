@@ -29,8 +29,9 @@ jest.mock('prom-client', () => {
     labels() { return this; }
   }
   const register = new Registry();
+  Registry.defaultRegistry = register;
   return {
-    Registry: { defaultRegistry: register },
+    Registry,
     Counter,
     Gauge,
     Histogram,
