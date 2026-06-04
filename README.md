@@ -117,6 +117,68 @@ Deploy the faulty `error` release tag:
 ```
 *Result: The deployment script begins upgrading the backend container. It polls the container health state, detects it remains `unhealthy` (due to the simulated HTTP 500 configuration), aborts the deployment, and immediately rolls back both services to the previous stable release (`1` / `7`) tags.*
 
+---
+
+## ☸️ Azure Kubernetes Service (AKS) Deployment
+
+You can deploy the full application stack to **Azure Kubernetes Service (AKS)** using the pre-configured manifests in the [kubernetes/](file:///home/chameau/Desktop/Kamka/fullstack-app/kubernetes) directory.
+
+### 1. Prerequisites & CLI Setup
+Ensure you have the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) and [kubectl](https://kubernetes.io/docs/tasks/tools/) installed.
+
+Log in to Azure and download the configuration credentials for your AKS cluster:
+```bash
+az login
+az aks get-credentials --resource-group <your-resource-group> --name <your-aks-cluster-name>
+```
+
+### 2. Configure Secrets & Storage
+We use Kubernetes Secrets to manage database and dashboard credentials securely.
+
+1. Create the database credentials secret:
+```bash
+kubectl create secret generic db-secrets \
+  --from-literal=mysql-root-password="your-root-password" \
+  --from-literal=mysql-database="fullstack_db" \
+  --from-literal=mysql-user="appuser" \
+  --from-literal=mysql-password="your-db-password"
+```
+
+2. Create the Grafana admin credentials secret:
+```bash
+kubectl create secret generic grafana-secrets \
+  --from-literal=admin-user="admin" \
+  --from-literal=admin-password="your-grafana-password"
+```
+
+3. Deploy the PersistentVolumeClaim (PVC) and MySQL database:
+```bash
+kubectl apply -f kubernetes/mysql.yaml
+```
+*This dynamically provisions an Azure Managed Disk using the standard CSI storage class and mounts it at `/var/lib/mysql` to preserve database states.*
+
+### 3. Deploy Application Services
+Apply the backend and frontend manifests:
+```bash
+kubectl apply -f kubernetes/backend.yaml
+kubectl apply -f kubernetes/frontend.yaml
+```
+
+### 4. Deploy Monitoring Stack
+Apply Prometheus, Grafana, and Exporters:
+```bash
+kubectl apply -f kubernetes/monitoring.yaml
+```
+
+### 5. Access the Services
+Retrieve the public IP addresses assigned by the Azure Load Balancer for the Frontend and Grafana:
+```bash
+# Get Frontend Web Portal IP (Accessible on Port 80)
+kubectl get service frontend-service
+
+# Get Grafana Dashboard IP (Accessible on Port 3001)
+kubectl get service grafana
+```
 
 ---
 
