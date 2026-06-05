@@ -36,6 +36,14 @@ A production-grade, containerized fullstack web application equipped with REST A
 - **Observability**: Prometheus scraping Nginx, Backend, & MySQL endpoints; Grafana dashboards.
 - **CI/CD**: GitHub Actions matrix workflow with smart path-based conditional cache gating.
 
+### 📸 Application Screenshots
+
+#### Web Application User Portal
+![Web App UI](img/webapp.png)
+
+#### Grafana Observability Dashboard
+![Grafana Dashboard](img/grafana.png)
+
 ---
 
 ## 🚀 Quick Start (Development Mode)
